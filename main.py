@@ -5,17 +5,19 @@ import numpy as np
 import sys
 
 BEST = []
-DIM = 20
-THRESH = DIM*0.4
-CG_MIN = 0.4 * DIM
+DIM = 20 
+THRESH = 9 # DIM*0.4
+CG_MIN = 0.45 * DIM
 CG_MAX = 0.55 * DIM
 SKIP_COUNT = 0
 EXEC_COUNT = 0
-PRIMERS = 1000
+PRIMERS = 2000
+MAX_TANGENT = 1
 
 
 def feedback(candidate):
     global EXEC_COUNT
+    global MAX_TANGENT
     global SKIP_COUNT
     global BEST
     EXEC_COUNT += 1
@@ -33,12 +35,23 @@ def feedback(candidate):
         return 0
 
     distances = [editdistance.eval(candidate, rep) for rep in BEST]
-    all_exceed = all([dist > THRESH for dist in distances])
+    all_exceed = all([dist >= THRESH for dist in distances])
 
     if all_exceed:
-        BEST.append(candidate)
-        print(len(BEST))
-        return 0
+        num_tangent = sum([dist == THRESH for dist in distances])
+        if num_tangent > MAX_TANGENT:
+            MAX_TANGENT += 1
+            BEST.append(candidate)
+            print(len(BEST))
+            return 0
+        if num_tangent == len(BEST):
+            BEST.append(candidate)
+            print(len(BEST))
+            return 0
+        cost = THRESH + 1 + num_tangent
+        return -cost
+        
+        
     total = sum(distances)
     cost = min(distances) - (1/total)
     return -cost
@@ -85,10 +98,9 @@ squish_model = ga(function=squish_feedback, dimension=DIM*len(BEST), variable_ty
 while len(BEST) < PRIMERS:
 # while False:
     start = time.time()
-    search_model.run()
+    od = search_model.run()
     end = time.time()
-    print(f"{BEST[-1]} candidate")
-    print(f"{len(BEST)} candidates found")
+    print(f"{od}")
     print(f"{end - start} elapsed")
     print(f"{SKIP_COUNT} of {EXEC_COUNT} skipped")
     EXEC_COUNT = 0
