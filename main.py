@@ -114,8 +114,20 @@ while len(BEST) < PRIMERS:
             MAX_TANGENT = num_tang
             print(f"Added Best effort! num tang {num_tang}");
 
+
     print(f"{end - start} elapsed")
     print(f"Found {len(BEST)} primers")
+    distance = 0
+    num_tang = 0
+    for i in range(len(BEST)):
+        for j in range(i + 1, len(BEST)):
+            this_dist = editdistance.eval(BEST[i], BEST[j])
+            distance += this_dist
+            if this_dist == THRESH:
+                num_tang += 1
+
+    print(f"avg distance {distance/((len(BEST)**2)/2)}")
+    print(f"avg num_tang {(num_tang/2)/len(BEST)}")
     print(f"{SKIP_COUNT} of {EXEC_COUNT} skipped")
     EXEC_COUNT = 0
     SKIP_COUNT = 0
