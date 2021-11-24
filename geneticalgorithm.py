@@ -269,7 +269,7 @@ class geneticalgorithm():
 
         #############################################################
 
-    def run(self):
+    def run(self, init_pop=[]):
 
         #############################################################
         # Initial Population
@@ -283,19 +283,24 @@ class geneticalgorithm():
 
         for p in range(0, self.pop_s):
 
-            for i in self.integers[0]:
-                var[i] = np.random.randint(self.var_bound[i][0],
-                                           self.var_bound[i][1]+1)
-                solo[i] = var[i].copy()
-            for i in self.reals[0]:
-                var[i] = self.var_bound[i][0]+np.random.random() *\
-                    (self.var_bound[i][1]-self.var_bound[i][0])
-                solo[i] = var[i].copy()
+            if len(init_pop) > 0:
+                var = init_pop[p % len(init_pop)]
+                solo[:-1] = var
+            else:
+                for i in self.integers[0]:
+                    var[i] = np.random.randint(self.var_bound[i][0],
+                                               self.var_bound[i][1]+1)
+                    solo[i] = var[i].copy()
+                for i in self.reals[0]:
+                    var[i] = self.var_bound[i][0]+np.random.random() *\
+                        (self.var_bound[i][1]-self.var_bound[i][0])
+                    solo[i] = var[i].copy()
 
             obj = self.sim(var)
             solo[self.dim] = obj
             pop[p] = solo.copy()
 
+        print(f"POPULATION {pop}")
         #############################################################
 
         #############################################################
@@ -358,6 +363,7 @@ class geneticalgorithm():
                 par[k] = pop[k].copy()
             for k in range(self.num_elit, self.par_s):
                 index = np.searchsorted(cumprob, np.random.random())
+                index = min(index, self.pop_s-1)
                 par[k] = pop[index].copy()
 
             ef_par_list = np.array([False]*self.par_s)

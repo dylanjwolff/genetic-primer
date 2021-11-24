@@ -5,9 +5,9 @@ import numpy as np
 import sys
 
 BEST = []
-DIM = 20
-THRESH = DIM*0.4
-CG_MIN = 0.4 * DIM
+DIM = 10
+THRESH = 5
+CG_MIN = 0.45 * DIM
 CG_MAX = 0.55 * DIM
 SKIP_COUNT = 0
 EXEC_COUNT = 0
@@ -33,7 +33,7 @@ def feedback(candidate):
         return 0
 
     distances = [editdistance.eval(candidate, rep) for rep in BEST]
-    all_exceed = all([dist > THRESH for dist in distances])
+    all_exceed = all([dist >= THRESH for dist in distances])
 
     if all_exceed:
         BEST.append(candidate)
@@ -42,6 +42,7 @@ def feedback(candidate):
     total = sum(distances)
     cost = min(distances) - (1/total)
     return -cost
+
 
 def check_cg_ok(candidate):
     global SKIP_COUNT
@@ -69,21 +70,18 @@ def squish_feedback(candidate):
             if this_distance < THRESH:
                 return np.finfo('d').max
             distance += this_distance
+    print(f"FOUND one {distance}")
 
     return distance
+
 
 varbound = np.array([[1, 4]]*DIM)
 
 search_model = ga(function=feedback, dimension=DIM, variable_type='int',
-           variable_boundaries=varbound)
+                  variable_boundaries=varbound)
 
-varbound = np.array([[1, 4]]*DIM*len(BEST))
-squish_model = ga(function=squish_feedback, dimension=DIM*len(BEST), variable_type='int',
-           variable_boundaries=varbound)
-
-# print(squish_model.pop_s)
 while len(BEST) < PRIMERS:
-# while False:
+    # while False:
     start = time.time()
     search_model.run()
     end = time.time()
@@ -93,6 +91,17 @@ while len(BEST) < PRIMERS:
     print(f"{SKIP_COUNT} of {EXEC_COUNT} skipped")
     EXEC_COUNT = 0
     SKIP_COUNT = 0
+    current_primers = np.reshape(BEST, DIM*len(BEST))
+    unsquished = squish_feedback(current_primers)
+
+    varbound = np.array([[1, 4]]*DIM*len(BEST))
+    squish_model = ga(function=squish_feedback, dimension=DIM*len(BEST), variable_type='int',
+                      variable_boundaries=varbound)
+    print(f"Unsquished total dist {unsquished}")
+    start = time.time()
+    squish_model.run([current_primers])
+    end = time.time()
+    print(f"{end - start} squish time elapsed")
 
 # ina = np.array([0.]*40)
 # r = squish_feedback(ina)
