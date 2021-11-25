@@ -72,35 +72,12 @@ def check_cg_ok(candidate):
 
     return True
 
-
-def squish_feedback(candidate):
-    separated = np.reshape(candidate, (int(len(candidate)/DIM), DIM))
-
-    distance = 0
-    for row_num, row in enumerate(separated):
-        if not check_cg_ok(row):
-            return np.finfo('d').max
-
-        for other_row in separated[row_num+1:]:
-            this_distance = editdistance.eval(row, other_row)
-            if this_distance < THRESH:
-                return np.finfo('d').max
-            distance += this_distance
-
-    return distance
-
 varbound = np.array([[1, 4]]*DIM)
 
 search_model = ga(function=feedback, dimension=DIM, variable_type='int',
            variable_boundaries=varbound)
 
-varbound = np.array([[1, 4]]*DIM*len(BEST))
-squish_model = ga(function=squish_feedback, dimension=DIM*len(BEST), variable_type='int',
-           variable_boundaries=varbound)
-
-# print(squish_model.pop_s)
 while len(BEST) < PRIMERS:
-# while False:
     start = time.time()
     search_model.run()
     end = time.time()
@@ -117,22 +94,7 @@ while len(BEST) < PRIMERS:
 
     print(f"{end - start} elapsed")
     print(f"Found {len(BEST)} primers")
-    distance = 0
-    num_tang = 0
-    for i in range(len(BEST)):
-        for j in range(i + 1, len(BEST)):
-            this_dist = editdistance.eval(BEST[i], BEST[j])
-            distance += this_dist
-            if this_dist == THRESH:
-                num_tang += 1
-
-    print(f"avg distance {distance/((len(BEST)**2)/2)}")
-    print(f"avg num_tang {(num_tang/2)/len(BEST)}")
     print(f"{SKIP_COUNT} of {EXEC_COUNT} skipped")
     EXEC_COUNT = 0
     SKIP_COUNT = 0
     ADDED_THIS_ROUND = False
-
-# ina = np.array([0.]*40)
-# r = squish_feedback(ina)
-# print(r)
