@@ -68,8 +68,10 @@ class RepeatedTimer(object):
 
     def _run(self):
         self.is_running = False
-        self.start()
         self.function(*self.args, **self.kwargs)
+        # Starting timer only after fn has completed; may result in longer intervals than
+        # specified, but no risk of spawning too many processes if function is slow.
+        self.start() 
 
     def start(self):
         if not self.is_running:
@@ -119,7 +121,7 @@ search_model = ga(function=feedback, dimension=DIM, variable_type='int',
                   variable_boundaries=varbound)
 
 RepeatedTimer(1, log)
-while len(BEST) < PRIMERS:
+while len(BEST) < PRIMERS: 
     start = time.time()
     search_model.run()
     end = time.time()
