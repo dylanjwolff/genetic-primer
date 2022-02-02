@@ -24,7 +24,7 @@ def feedback(candidate):
     global BEST
     EXEC_COUNT += 1
 
-    if not check_cg_ok:
+    if not check_cg_ok(candidate):
         return 0
 
     if len(BEST) == 0:
